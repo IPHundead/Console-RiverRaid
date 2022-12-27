@@ -1,0 +1,48 @@
+ENGLISH
+فارسی
+
+
+
+EN
+
+Version 0.5
+
+Please Always make sure to keep the "userinfo.txt" file and "atari.exe"
+file in the same directory (in the same folder)
+
+Controls :
+
+W : forward
+S : backward
+A : left
+D : right
+P : pause (Hold)
+X : exit (Hold, Only works if you're dead/game is paused) 
+
+Developed By : IPH_undead
+Enjoy!
+
+
+فا
+
+نسخه 0.5
+
+لطفا همیشه پرونده متنی
+"userinfo.txt"
+را در کنار برنامه ی 
+"atari.exe"
+نگه دارید
+(میتوانید آنها را در یک پوشه (فولدر) بگذارید)
+
+کلید های هدایت بازی :
+
+W : حرکت به جلو
+S : حرکت به عقب
+A : حرکت به چپ
+D : حرکت به راست
+P : ایست بازی (نگه دارید)
+X : خروج از بازی (نگه دارید، تها هنگامی کار میکند که بازی ایستاده باشد، یا اینکه شما مرده باشید) 
+
+توسعه یافته توسط
+IPH_undead
+!لذت ببرید
