@@ -1,5 +1,3 @@
-//ATARI version 0.4, Stable, DEV XN_UND
-
 #include <iostream>
 #include <windows.h>
 #include <conio.h>
