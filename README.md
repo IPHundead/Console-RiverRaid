@@ -18,6 +18,7 @@ P : pause (Hold)
 
 X : exit (Hold, Only works if you're dead/game is paused) 
 
+SPACE : fire
 
 Developed By : IPH_undead
 
