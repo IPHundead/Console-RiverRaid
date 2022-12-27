@@ -7,11 +7,17 @@ file in the same directory (in the same folder)
 Controls :
 
 W : forward
+
 S : backward
+
 A : left
+
 D : right
+
 P : pause (Hold)
+
 X : exit (Hold, Only works if you're dead/game is paused) 
+
 
 Developed By : IPH_undead
 Enjoy!
