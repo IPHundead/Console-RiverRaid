@@ -1,0 +1,10 @@
+controlright "D"
+controlleft "A"
+controlup "W"
+controldown "S"
+controlfire " "
+controlpause "P"
+controlreload "R"
+
+show loading screens "1"
+show menu loading screen "1"
