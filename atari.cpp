@@ -2347,10 +2347,6 @@ int main(int argc, char *argv[])
 	menuitem[7].text="SKINS";
 	menuitem[8].text="EXIT TO DESKTOP";
 	
-	
-	menuitem.text={"hello", "World"};
-
-	
 	if (showmenuloadingscreen==true)
 	{
 		changecolor("black");
