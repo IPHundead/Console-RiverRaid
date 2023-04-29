@@ -2,13 +2,25 @@
 #include <windows.h>
 #include <conio.h>
 #include <fstream>
-#include <fcntl.h>
-#include <io.h>
 #include <cstdlib>
 #include <time.h>
+#include <thread>
 //#include "atariplane.ico"
 
+//#define _WIN32_WINNT 0x0500
 
+void resizeatari()
+{
+	HWND console = GetConsoleWindow(); 
+	MoveWindow(console, 150, 100, 1185, 662, TRUE);
+}
+
+
+const short int fps=30;
+void fpswait()
+{	
+	Sleep(1000/fps); 	
+}
 
 using namespace std;
 
@@ -368,7 +380,6 @@ void drawenemy (int enemyx,int enemyy)
 
 void drawjet (int enemyx,int enemyy, bool direc)
 {
-
 	locate (enemyx-2, enemyy);
 	
 	if (direc==0)
@@ -379,7 +390,6 @@ void drawjet (int enemyx,int enemyy, bool direc)
 	{
 		cout << "X-==-";
 	}
-	
 }
 
 void subtitle(string sub, int startofscreen, int sizeofscreen, string river)
@@ -421,6 +431,23 @@ void quit(int score, int highscore, int startofscreen, int sizeofscreen, string 
 	}
 	subtitle ("GAME QUIT", startofscreen, sizeofscreen, river);
 	Sleep(1000);
+}
+
+void sortthis(int tarr[], int tarrsize)
+{
+	int temp=0;
+	for (int j=0; j<=tarrsize;j++)
+	{
+		for (int i=1; i<tarrsize; i++)
+		{
+			if (tarr[i] > tarr[i-1])
+			{
+				temp=tarr[i-1];
+				tarr[i-1]=tarr[i];
+				tarr[i]=temp;
+			}
+		}
+	}
 }
 
 string easytohard(int number, int maxnumber)
@@ -509,9 +536,6 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 {	
 	int sleepsaver=sleeptimer;
 	
-
-	
-   // srand(time(0));
 	srand(time(0));
 	fstream scorefile(scorefilelocation);
 	int endofscreen=startofscreen+sizeofscreen;
@@ -519,22 +543,11 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 	bool dead=false, stopspawning=false;
 	long long int score=0, highscore;
 	int 
-	enemycooldown=0, 
-	hitreg=0, 
-	hitscan=0, 
-	pausetimer=0, 
-	bulletid=20,
-	barrierid=20, 
-	enemyid=30,
 	numberofbullets=0, 
-	enemymovecounter=0,
-	enemygencounter=0,
 	enemygenrandom=10,
 	enemygendivider=25,
-	barriergencounter=0,
 	barriergenrandom=10,
-	barriergendivider=30,
-	difficulty=0;
+	barriergendivider=30;
 	
 	
 	
@@ -589,8 +602,8 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 
 		//arguments end
 
-		locate (0, 0);		
-		enemycooldown=0, 
+		locate (0, 0);
+		int	enemycooldown=0, 
 		hitreg=0, 
 		hitscan=0, 
 		pausetimer=0, 
@@ -672,17 +685,12 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 		
 		while (dead!=true)
 		{
-			
+
+			thread fpsregulator(fpswait);
 			if (infinite==true)
 			{
 				if (score%150==0 && score!=0)
 				{
-					
-					if (sleeptimer>13)
-					{
-						sleeptimer--;
-						difficulty++;
-					}
 					if (barriergendivider>10)
 					{
 						barriergendivider--;
@@ -696,7 +704,7 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 				}
 			}	
 
-			Sleep(sleeptimer);
+			//Sleep(sleeptimer);
 			score++;
 			if(score >= highscore){
 				highscore = score;	
@@ -839,10 +847,18 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 			else if (mode == "twoplayerconflict")
 			{
 				if (GetKeyState(controlleft) < 0 && GetKeyState(controlright) < 0)
-				{	
+				{
+					if (GetKeyState(controlup) < 0 && GetKeyState(controldown) < 0)
+					{
+						pausetimer=150;
+					}
 				}
 				if(GetKeyState(VK_LEFT) < 0 && GetKeyState(VK_RIGHT) < 0)
 				{
+					if (GetKeyState(VK_UP) < 0 && GetKeyState(VK_DOWN) < 0)
+					{
+						pausetimer=150;
+					}
 				}
 				if (GetKeyState(controlleft) < 0 && GetKeyState(VK_LEFT) < 0){
 					if (plane[0].x > startofscreen+4){
@@ -864,10 +880,18 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 				}
 		
 				if (GetKeyState(controlup) < 0 && GetKeyState(controldown) < 0)
-				{	
+				{
+					if (GetKeyState(controlleft) < 0 && GetKeyState(controlright) < 0)
+					{
+						pausetimer=150;
+					}
 				}
 				if (GetKeyState(VK_UP) < 0 && GetKeyState(VK_DOWN) < 0)
-				{	
+				{
+					if(GetKeyState(VK_LEFT) < 0 && GetKeyState(VK_RIGHT) < 0)
+					{
+						pausetimer=150;
+					}
 				}
 				if (GetKeyState(controlup) < 0 && GetKeyState(VK_UP) < 0){
 					if (plane[0].y > 10){
@@ -900,12 +924,13 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 				if (GetKeyState(controlright) < 0 || GetKeyState(VK_RIGHT) < 0){
 					if (plane[0].x < endofscreen-5){
 						if (plane[0].x==endofscreen-6)
-							{
-								dead=1;
-							}
+						{
+							dead=1;
+						}
 						plane[0].x++;
 					}
 				}
+						             
 		
 				if (GetKeyState(controlup) < 0 && GetKeyState(controldown) < 0)
 				{	
@@ -1029,49 +1054,98 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 					}
 				}
 			}
+
+
+		
 			
-//			if (GetKeyState(SlowMo) < 0){		
-//				if (sleeptimer<100)
-//				{
-//					sleeptimer+=10;
-//				}
-//			}
-//			else
-//			{
-//				if (sleeptimer>sleeptimersave)
-//				{
-//					sleeptimer-=10;
-//				}
-//			}
-			
-			if (GetKeyState(controlpause) < 0){		
+			if (pausetimer>=15)
+			{
+				for (int pc=0; pc<numberofplanes; pc++)
+				{
+					if (numberofplanes==1)
+					{
+						drawplane (plane[pc].x, plane[pc].y);
+					}
+					else
+					{
+						drawplane (plane[pc].x, plane[pc].y);
+						locate(plane[pc].x, plane[pc].y);
+						cout << pc+1;
+					}
+				}
+				changecolor("gray");
+				locate(endofscreen, 29);
+				cout << "GAME PAUSED.";
+				if (pausetimer>100)
+				{
+					subtitle ("Do not hold all the keys at the same time", startofscreen, sizeofscreen, river);
+				}
+				else
+				{
+					subtitle ("||  PAUSE", startofscreen, sizeofscreen, river);
+				}
+				locate(0, 0);
+				save (score, highscore);
+				Sleep(500); 
+				while(true)
+				{
+					if (GetKeyState(controlpause) < 0 || GetKeyState(VK_SPACE) < 0)
+					{	
+						locate(endofscreen, 29);
+						cout << "                                                       ";
+
+						locate(endofscreen, 29);
+						cout << "3...";
+						locate(0, 0);
+						Sleep(1000);
+						locate(endofscreen, 29);
+						cout << "2...";
+						locate(0, 0);
+						Sleep(1000);
+						locate(endofscreen, 29);
+						cout << "1...";
+						locate(0, 0);
+						Sleep(1000);
+						locate(endofscreen, 29);
+						cout << "    ";
+						locate(0, 0);
+						pausetimer=0;
+					//	subtitle (river, startofscreen, sizeofscreen, river);
+						locate(0, 0);
+						changecolor(defaultcolor);	
+						Sleep(100);
+						break;
+					}
+					if (GetKeyState(VK_ESCAPE) < 0)
+					{	
+						quit(score, highscore, startofscreen, sizeofscreen, river, mode);
+						fpsregulator.join();	
+						return 0;
+					}
+				}
+			}
+			else if (pausetimer==0)
+			{
+				locate(endofscreen, 29);
+				cout << "                ";
+			}
+		
+				
+			if (GetKeyState(controlpause) < 0){
 				if (pausetimer < 15)
 				{
-				locate(endofscreen, 29);
-				cout << "PAUSING";
-				locate(endofscreen+7+pausetimer/5, 29);
-				cout << ".";
-				pausetimer++;
-				}
-				else 
-				{
-		
-					pausetimer=0;
-				}
-				if (pausetimer>=15)
-				{
-					goto PAUSE;
-				}
+					locate(endofscreen, 29);
+					cout << "PAUSING";
+					locate(endofscreen+7+pausetimer/5, 29);
+					cout << ".";
+					pausetimer++;
+				}	
 			}
 			else 
 			{
-				locate(endofscreen, 29);
-				cout << "                             "; 
 				pausetimer=0;
-			}
+			}	
 			
-			UNPAUSE:
-		
 			//enemy functionality
 			for (int j=(enemyid-20); j<=enemyid; j++)
 			{
@@ -1118,7 +1192,7 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 								}
 								else
 								{
-									if (enemy[j].x > endofscreen-5+7) //-7 is for the empty space before RIVER string.
+									if (enemy[j].x > endofscreen-5+7) //7 is for the empty space before RIVER string.
 									{		
 										enemy[j].alive=false;
 									}
@@ -1345,6 +1419,8 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 					enemygencounter++;
 				}
 			}
+			//always 60 fps babyyyyyyyyyyy
+			fpsregulator.join();
 	//---end main game WHILE
 		}
 		
@@ -1379,6 +1455,7 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 		
 		if (GetKeyState(VK_ESCAPE) < 0){
 			quit(score, highscore, startofscreen, sizeofscreen, river, mode);
+			
 			return 0;
 		}
 	
@@ -1391,49 +1468,8 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 		//returning to start
 	}
 	
-	//INF PAUSE LOOP
-	if (1==2)
-	{
-		PAUSE:
-		for (int pc=0; pc<numberofplanes; pc++)
-		{
-			if (numberofplanes==1)
-			{
-				drawplane (plane[pc].x, plane[pc].y);
-			}
-			else
-			{
-				drawplane (plane[pc].x, plane[pc].y);
-				locate(plane[pc].x, plane[pc].y);
-				cout << pc+1;
-			}
-		}
-		changecolor("gray");
-		locate(endofscreen, 29);
-		cout << "GAME PAUSED.";
-		subtitle ("||  PAUSE", startofscreen, sizeofscreen, river);
-		locate(0, 0);
-		save (score, highscore);
-		Sleep(500); 
-		while(true)
-		{
-			if (GetKeyState(controlpause) < 0 || GetKeyState(VK_SPACE) < 0)
-			{	
-				locate(endofscreen, 29);
-				cout << "                                                       ";
-				subtitle (river, startofscreen, sizeofscreen, river);
-				locate(0, 0);
-				changecolor(defaultcolor);	
-				Sleep(100);
-				goto UNPAUSE;
-			}
-			if (GetKeyState(VK_ESCAPE) < 0)
-			{	
-				quit(score, highscore, startofscreen, sizeofscreen, river, mode);	
-				return 0;
-			}
-		}
-	}
+		
+	
 	
 	if (mode == "scored")
 	{
@@ -1442,7 +1478,7 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 	return 0;
 }
 
-int loadingscreen()
+int loadingscreen(bool quick=false)
 {
 	if (showloadingscreen==true)
 	{
@@ -1460,39 +1496,57 @@ int loadingscreen()
 		{
 			cout << "-";	
 		}
-		Sleep(1000);
 		locate(0, 25);
-		for (int i=0; i<120; i++)
+		if (!quick)
 		{
-			if (i==4)
+			Sleep(1000);
+			for (int i=0; i<120; i++)
 			{
-				Sleep(700);
+				if (i==4)
+				{
+					Sleep(700);
+				}
+				if (i==6)
+				{
+					Sleep(700);
+				}
+				if (i<20)
+				{
+					Sleep(25);
+				}
+				if (i==80)
+				{
+					Sleep(500);
+				}
+				if (i<80)
+				{
+					Sleep(10);
+				}
+				cout << "#";
 			}
-			if (i==6)
-			{
-				Sleep(700);
-			}
-			if (i<20)
-			{
-				Sleep(25);
-			}
-			if (i==80)
-			{
-				Sleep(500);
-			}
-			if (i<80)
-			{
-				Sleep(10);
-			}
-			cout << "#";
+			Sleep(1000);
 		}
-		Sleep(1000);
+		else
+		{
+			Sleep(300);
+			for (int i=0; i<120; i++)
+			{
+			//	Sleep(1);
+				cout << "#";
+			}
+			Sleep(50);
+		}
+		
 		FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
-	
-		string pass="Press Any Key To Continue";
-		locate(59-pass.size()/2, 23);
-		cout << pass;
-		_getch();
+		
+		if (!quick)
+		{
+		
+			string pass="Press Any Key To Continue";
+			locate(59-pass.size()/2, 23);
+			cout << pass;
+			_getch();
+		}
 		Sleep(80);
 		system("CLS");	
 	}
@@ -1548,30 +1602,31 @@ int capitalizer(char letter)
 
 char changecontrol (char control, int line)
 {
-	control = _getch();
-	if (control != '\r')
+	while (true)
 	{
-
-		control = capitalizer(control);
-		file_write.chartype(settingsfilelocation, line, control);
-		return control;
+		control = _getch();
+		if (control != '\r' && control != 27)
+		{
+			control = capitalizer(control);
+			file_write.chartype(settingsfilelocation, line, control);
+			return control;
+		}
+		changecolor("red");
+		Sleep(100);
+		changecolor("blue");
+		locate(0, 1);
+		cout << "that key is not supported.\n";
 	}
-	return '?';
 }
 
 int controlsscreen()
 {
 	int nomi=8, currentselected=0;
-	menuitem menuitem[nomi+1];
+	menuitem menuitem[nomi];
 	Sleep(20);
 	system("CLS");
 	locate (0, 0);
-//	cout << "Press Enter/Space on an item to change its key, hold S and E on an item to set it to SPACE.";
 
-
-	
-	
-	
 	menuitem[0].text="RIGHT";
 	menuitem[1].text="LEFT";
 	menuitem[2].text="UP";
@@ -1935,13 +1990,15 @@ int multiplayerscreen()
 {
 	int nomi=0, currentselected;
 	unsigned short int norounds;
+	string pass="Press Any Key To Continue";
 	changecolor("black");
 	system("CLS");
 	cout << endl;
 	locate (0, 0);
 	//clearinputbuffer();
 	locate(0, 0);
-	cout << "How Many Rounds?\n";
+	cout << "How Many Rounds?";
+	clearinputbuffer();
 	cin >> norounds;
 	clearinputbuffer();
 	system("CLS");
@@ -1967,7 +2024,8 @@ int multiplayerscreen()
 	menuitem[nomi-1].text="RETURN";
 	currentselected=0;
 	menuitem[currentselected].selected=true;
-	static long long int scoresaver[500][500]={0};
+	static long int scoresaver[100][100]={0};
+	static long int scoreshower[100][100]={0};
 	long long scoresummer=0;
 	Sleep(200);
 		
@@ -1991,14 +2049,20 @@ int multiplayerscreen()
 				for (int i=0; i<norounds; i++)
 				{
 					system("CLS");
+					changecolor("black");
 					cout << "Round " << i+1;
 					Sleep(2500);
 					for (int j=1; j<nomi-1; j++)
 					{
 						changecolor("black");
 						system("CLS");
-						cout << "Its " << menuitem[j].text << "'s Turn!";
-						Sleep(3000);
+						cout << "Its " << menuitem[j].text << "'s Turn!\n\n";
+						FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+						Sleep(400);
+						locate(59-pass.size()/2, 23);
+						cout << pass;
+						_getch();
+						loadingscreen(true);
 						system("CLS");
 						scoresaver[i][j] = game("scored", true, 0, "blue", 15, 50, 30);	
 						Sleep(50);
@@ -2334,8 +2398,11 @@ int main(int argc, char *argv[])
 {	
 	int nomi=9, currentselected; //nomi: number of menu items
 	menuitem menuitem[nomi+1];
-	ShowConsoleCursor(false);
 
+
+	resizeatari();
+	
+	ShowConsoleCursor(false);
 	
 	menuitem[0].text="ENDLESS";
 	menuitem[1].text="BOSS FIGHT";
@@ -2346,6 +2413,7 @@ int main(int argc, char *argv[])
 	menuitem[6].text="HELP";
 	menuitem[7].text="SKINS";
 	menuitem[8].text="EXIT TO DESKTOP";
+
 	
 	if (showmenuloadingscreen==true)
 	{
@@ -2357,7 +2425,7 @@ int main(int argc, char *argv[])
 		{
 			Sleep(200);
 			locate(0, 0);
-			menuitem[i].draw(i);
+		menuitem[i].draw(i);
 			locate(0, 0);
 		}
 		Sleep(200);
@@ -2368,7 +2436,7 @@ int main(int argc, char *argv[])
 
 	currentselected=0;
 	menuitem[currentselected].selected=true;
-
+	
 
 //	locate(119, 29);
 //	cout << "X";
