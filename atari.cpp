@@ -6,8 +6,59 @@
 #include <time.h>
 #include <thread>
 //#include "atariplane.ico"
-
+using namespace std;
 //#define _WIN32_WINNT 0x0500
+
+class planeSkins {
+	
+    public:
+    	
+		string name;
+		string skin[4];
+ 		int skinsize[4];
+        
+        planeSkins(string name, initializer_list<string> sinput)
+		{
+			this->name=name;
+
+			for (int i=0;i<4;i++)
+			{
+				skin[i] = *(sinput.begin()+i);
+				skinsize[i]=skin[i].size();
+			}
+		} 
+    
+};
+
+const planeSkins allSkins[12] = {
+	{"AURORA",      {"A", "<=H=>", "Y", "<A>"}},
+	{"CHRIST",      {"|", "==+==", "|", "|"}},
+	{"SPACESHIP",   {"A", "<H=H>", "T", "^A^"}},
+	{"RETRO",       {"A", "[===]", "H", "[=]"}},
+	{"YACHT",       {R"(/X\)", "|XXX|", "|XXX|", R"(\X/)"}},
+	{"EAGLE",       {"A", R"(/=X=\)", "T", R"(/X\)"}},
+	{"PIXEL",       {"A", "|=-=|", "T", "|-|"}},
+	{"FIGHTER",     {"A", "<TXT>", "Y", R"(/A\)"}},
+	{"AMOR",        {"A", R"(</M\>)", "| |", R"(/A\)"}},
+	{"EXOSKELETON", {R"(/A\)", "<<H>>", "W", R"(/Y\)"}},
+	{"LOOP",        {"A", "<>H<>", "Y", "<A>"}},
+	{"THRUST",      {"A", "A=H=A", "Y", "A^A"}}
+	};
+	
+
+
+
+
+
+
+
+
+void clearmyfile(string myaddress)
+{
+	ofstream tempfile(myaddress);
+	tempfile << "";
+	tempfile.close();
+}
 
 void resizeatari()
 {
@@ -15,19 +66,18 @@ void resizeatari()
 	MoveWindow(console, 150, 100, 1185, 662, TRUE);
 }
 
-
-const short int fps=30;
+const short int fps=35;
 void fpswait()
 {	
 	Sleep(1000/fps); 	
 }
 
-using namespace std;
+
 
 const string scorefilelocation = "data/score.txt";
 const string settingsfilelocation = "data/settings.txt";
-const string skinfilelocation = "data/cosmetics.txt";
-
+const string colorfilelocation = "data/cosmetics/color.txt";
+const string skinfilelocation = "data/cosmetics/skin.txt";
 
 class file_read
 {
@@ -206,12 +256,10 @@ class file_write
 			long2type(filename, reqline, input);
 			return 0;
 		}
-
 };
 
 file_write file_write;
 file_read file_read;
-
 
 struct basicclass{
 	bool alive=false;
@@ -274,6 +322,68 @@ void locate ( int x, int y )
     SetConsoleCursorPosition ( GetStdHandle ( STD_OUTPUT_HANDLE ), position );
 }
 
+bool ynprompt(string text, int y=14)
+{
+	Sleep(20);
+	int spos=59-(text.size()+1)/2;
+	locate (spos-2, y-3);
+	for (int i=0; i<text.size()+4; i++){cout << "-";}	
+	locate (spos-2, y+3);
+	for (int i=0; i<text.size()+4; i++){cout << "-";}
+	
+	string flusher;
+	
+	for (int i=0;i<text.size()+2+2-2;i++)
+	{
+		flusher+=' ';
+	}
+	flusher = '|'+flusher+'|';
+	for (int i=-2;i<3;i++)
+	{
+		locate (spos-2, y+i);cout << flusher;
+	}
+	
+	locate (spos, y-1);
+	cout << text;
+	
+	
+	bool selected=0;
+	while(true)
+	{
+		if (GetKeyState(VK_LEFT)<0)
+		{
+			Sleep(70);
+			selected=1;
+		}
+		else if (GetKeyState(VK_RIGHT) < 0)
+		{
+			Sleep(70);
+			selected=0;
+		}
+		else if (GetKeyState(VK_RETURN) < 0)
+		{
+			Sleep(50);
+			system("CLS");
+			return selected;
+		}
+		if (selected==0)
+		{
+			locate (spos+(text.size()-1)/4-2, y+1);
+			cout << " YES ";
+			locate (spos+text.size()-(text.size()+1)/4-1, y+1);
+			cout << "-NO-";
+		}
+		else
+		{
+			locate (spos+(text.size()-1)/4-2, y+1);
+			cout << "-YES-";
+			locate (spos+text.size()-(text.size()+1)/4-1, y+1);
+			cout << " NO ";
+		}
+		Sleep(70);
+	}
+}
+
 int randomnumber(int sizeofscreen)
 {
 	int randn;
@@ -325,11 +435,11 @@ void changecolor(string color)
 	}
 	else if (color == "purple")
 	{
-		system("color 50");
+		system("color 5f");
 	}
 	else if(color == "light purple")
 	{
-		system("color d0");
+		system("color df");
 	}
 	else if (color == "red")
 	{
@@ -357,12 +467,57 @@ void changecolor(string color)
 	}
 }
 
+
+
+short int skinid=0;
+
+planeSkins mySkin = {allSkins[skinid].name, {allSkins[skinid].skin[0], allSkins[skinid].skin[1], allSkins[skinid].skin[2], allSkins[skinid].skin[3]}};
+
+void saveskin(short int myskinid)
+{
+	skinid=myskinid;
+	clearmyfile(skinfilelocation);
+	ofstream tempskinfile(skinfilelocation);
+	tempskinfile << skinid;
+	tempskinfile.close();
+}
+
+void getskin()
+{
+	ifstream tempskinfile(skinfilelocation);
+	string tempskinid;
+	getline(tempskinfile, tempskinid);
+	try
+	{
+		skinid=stoi(tempskinid);
+	}
+	catch(...)
+	{
+		system("CLS");
+		system("color 0f");
+		cerr << "ERROR! please extract the file before running the program, or check if the data files are correct.\n\n (true error : STOI function returned exception. \n possible causes : \n file does not exist, \n files have been changed by the user, \n the folder the program is running is has not been extracted, \n or there is a string literal in the place of an integer in a data file.)\n [Error id #1] \n press any key to continue...";
+		getch();
+		exit(0);
+	}
+	tempskinfile.close();
+	
+	mySkin.name=allSkins[skinid].name;
+	for (int i=0;i<4;i++)
+	{
+		mySkin.skin[i]=allSkins[skinid].skin[i];
+		mySkin.skinsize[i]=allSkins[skinid].skinsize[i];
+	}
+		
+}
+
+
+ 
 void drawplane ( int planex, int planey)
 {
-	locate ( planex, planey-1);	cout <<    "A";
-	locate ( planex-2, planey); cout <<  "<=H=>";
-	locate ( planex, planey+1); cout <<    "Y";
-	locate ( planex-1, planey+2); cout << "<A>";
+	locate ( planex-mySkin.skinsize[0]/2, planey-1); cout << mySkin.skin[0];
+	locate ( planex-mySkin.skinsize[1]/2, planey);   cout << mySkin.skin[1];
+	locate ( planex-mySkin.skinsize[2]/2, planey+1); cout << mySkin.skin[2];
+	locate ( planex-mySkin.skinsize[3]/2, planey+2); cout << mySkin.skin[3];
 	locate (0, 0);
 }
 
@@ -531,8 +686,16 @@ char controlfire = file_read.chartype(settingsfilelocation, 5);
 char controlpause = file_read.chartype(settingsfilelocation, 6);
 char controlreload = file_read.chartype(settingsfilelocation, 7);
 
+string gamecolor;
 
-int game(const string mode, const bool infinite, int level, string defaultcolor, const int startofscreen, const int sizeofscreen, int sleeptimer)
+void getcolor()
+{
+	ifstream tempcolorfile3(colorfilelocation);
+	getline(tempcolorfile3, gamecolor);
+	tempcolorfile3.close();
+}
+
+int game(const string mode, const bool infinite, int level, const int startofscreen, const int sizeofscreen, int sleeptimer)
 {	
 	int sleepsaver=sleeptimer;
 	
@@ -598,7 +761,7 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 		{
 			ebgdd*=-1;
 		}	
-		changecolor(defaultcolor);
+		changecolor(gamecolor);
 
 		//arguments end
 
@@ -643,7 +806,7 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 		//generating enemies and jets
 		for (int i=0; i<10000; i++)
 		{
-			if (rand()%5==1)
+			if (rand()%8==1)
 			{
 				enemy[i].isjet=true;
 			}
@@ -1112,7 +1275,7 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 						pausetimer=0;
 					//	subtitle (river, startofscreen, sizeofscreen, river);
 						locate(0, 0);
-						changecolor(defaultcolor);	
+						changecolor(gamecolor);	
 						Sleep(100);
 						break;
 					}
@@ -1386,6 +1549,7 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 				score--;
 			}
 		
+			//enemy spawner
 			if (score > 5 && stopspawning != true)
 			{
 				if (barriergencounter>=barriergenrandom)
@@ -1419,7 +1583,7 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 					enemygencounter++;
 				}
 			}
-			//always 60 fps babyyyyyyyyyyy
+			//fixed fps babyyyyyy
 			fpsregulator.join();
 	//---end main game WHILE
 		}
@@ -1442,16 +1606,11 @@ int game(const string mode, const bool infinite, int level, string defaultcolor,
 		changecolor("red");
 		Sleep(2000); 
 		
-		
 		if (mode == "scored")
 		{
 			changecolor("blue");
 			return score;
 		}
-
-	
-
-
 		
 		if (GetKeyState(VK_ESCAPE) < 0){
 			quit(score, highscore, startofscreen, sizeofscreen, river, mode);
@@ -1560,6 +1719,38 @@ struct menubp {
 	int blinktimer=0;
 	string text;
 	
+	
+};
+
+struct longmenuitem:menubp {
+	void draw(int i)
+	{
+		locate(1, 2*i+2);
+		if (selected!=true)
+		{
+			cout << "  " << text << "  ";
+		}
+		else
+		{
+			if (blinktimer<8)
+			{
+				cout << "--" << text << "--";
+			}
+			else
+			{
+				cout << "  " << text << "  ";
+			}
+			blinktimer++;
+		
+			if (blinktimer == 16)
+			{
+				blinktimer=0;
+			}
+		}
+	}
+};
+
+struct menuitem:menubp {
 	void draw(int i)
 	{
 		locate(1, 2*i+5);
@@ -1587,8 +1778,63 @@ struct menubp {
 	}
 };
 
-struct menuitem:menubp {
-};
+int get_menu_updown(longmenuitem menuitem[], int nomi, int currentselected)
+{
+	if (GetKeyState(VK_UP) < 0)
+	{
+		menuitem[currentselected].selected=false;
+		menuitem[currentselected].blinktimer=0;
+		if (currentselected==0)
+		{
+			currentselected=nomi;
+		}
+		currentselected--;
+		menuitem[currentselected].selected=true;	
+		Sleep(150);	
+	}
+	else if (GetKeyState(VK_DOWN) < 0)
+	{
+		menuitem[currentselected].selected=false;
+		menuitem[currentselected].blinktimer=0;
+		if (currentselected==nomi-1)
+		{
+			currentselected=-1;
+		}
+		currentselected++;
+		menuitem[currentselected].selected=true;
+		Sleep(150);
+	}
+	return currentselected;
+}
+
+int get_menu_updown(menuitem menuitem[], int nomi, int currentselected)
+{
+	if (GetKeyState(VK_UP) < 0)
+	{
+		menuitem[currentselected].selected=false;
+		menuitem[currentselected].blinktimer=0;
+		if (currentselected==0)
+		{
+			currentselected=nomi;
+		}
+		currentselected--;
+		menuitem[currentselected].selected=true;	
+		Sleep(150);	
+	}
+	else if (GetKeyState(VK_DOWN) < 0)
+	{
+		menuitem[currentselected].selected=false;
+		menuitem[currentselected].blinktimer=0;
+		if (currentselected==nomi-1)
+		{
+			currentselected=-1;
+		}
+		currentselected++;
+		menuitem[currentselected].selected=true;
+		Sleep(150);
+	}
+	return currentselected;
+}
 
 int capitalizer(char letter)
 {
@@ -1779,29 +2025,9 @@ int controlsscreen()
 			system("CLS");
 			return 0;
 		}
-		else if (GetKeyState(VK_UP) < 0)
+		else
 		{
-			menuitem[currentselected].selected=false;
-			menuitem[currentselected].blinktimer=0;
-			if (currentselected==0)
-			{
-				currentselected=nomi;
-			}
-			currentselected--;
-			menuitem[currentselected].selected=true;	
-			Sleep(150);	
-		}
-		else if (GetKeyState(VK_DOWN) < 0)
-		{
-			menuitem[currentselected].selected=false;
-			menuitem[currentselected].blinktimer=0;
-			if (currentselected==nomi-1)
-			{
-				currentselected=-1;
-			}
-			currentselected++;
-			menuitem[currentselected].selected=true;
-			Sleep(150);
+			currentselected = get_menu_updown(menuitem, nomi, currentselected);
 		}
 	}
 }
@@ -1905,41 +2131,18 @@ int settingsscreen()
 			else if (currentselected == 3)
 			{
 				//reset high score
-				system("CLS");
-				cout << "Are you sure you want to reset your highscore? Y\\N";
-				Sleep(200);
-				clearinputbuffer();
-
-				while (true)
-				{	
-					int tempgetch=_getch();
-					if (tempgetch == 'y')
-					{
-						ofstream tempscorefile(scorefilelocation);
-						tempscorefile<<"0" << flush;
-						tempscorefile.close();
-						system("CLS");
-						cout << "SCORE RESET!";
-						
-						ifstream tempfile(scorefilelocation);	
-						tempfile >> menuhighscore;
-						tempfile.close();
-						
-						Sleep(1000);
-						break;
-					}
-					else if (tempgetch == 'n')
-					{
-						break;	
-					}
-					else
-					{
-						locate(0, 1);
-						cout << "Press either Y for yes or N for no. (check if your language is set to ENGLISH)";
-					}
-				}
 				Sleep(100);
-				system("CLS");
+				changecolor("black");
+				if (ynprompt("Are you sure you want to reset your highscore?"))
+				{
+					ofstream tempscorefile(scorefilelocation);
+					tempscorefile<< "0" << flush;
+					tempscorefile.close();				
+					ifstream tempfile(scorefilelocation);	
+					tempfile >> menuhighscore;
+					tempfile.close();
+				}
+				changecolor("blue");
 			}
 			else if (currentselected == nomi-1)
 			{
@@ -1959,31 +2162,12 @@ int settingsscreen()
 			system("CLS");
 			return 0;
 		}
-		else if (GetKeyState(VK_UP) < 0)
+		else
 		{
-			menuitem[currentselected].selected=false;
-			menuitem[currentselected].blinktimer=0;
-			if (currentselected==0)
-			{
-				currentselected=nomi;
-			}
-			currentselected--;
-			menuitem[currentselected].selected=true;	
-			Sleep(150);	
-		}
-		else if (GetKeyState(VK_DOWN) < 0)
-		{
-			menuitem[currentselected].selected=false;
-			menuitem[currentselected].blinktimer=0;
-			if (currentselected==nomi-1)
-			{
-				currentselected=-1;
-			}
-			currentselected++;
-			menuitem[currentselected].selected=true;
-			Sleep(150);
+			currentselected = get_menu_updown(menuitem, nomi, currentselected);
 		}
 	}
+	return 0;
 }
 
 int multiplayerscreen()
@@ -2064,7 +2248,7 @@ int multiplayerscreen()
 						_getch();
 						loadingscreen(true);
 						system("CLS");
-						scoresaver[i][j] = game("scored", true, 0, "blue", 15, 50, 30);	
+						scoresaver[i][j] = game("scored", true, 0, 15, 50, 30);	
 						Sleep(50);
 						if (scoresaver[i][j] == 0)
 						{
@@ -2116,33 +2300,13 @@ int multiplayerscreen()
 		}
 		else if (GetKeyState(VK_ESCAPE) < 0)
 		{
-			Sleep(100);
+			Sleep(75);
 			system("CLS");
 			return 0;
 		}
-		else if (GetKeyState(VK_UP) < 0)
+		else
 		{
-			menuitem[currentselected].selected=false;
-			menuitem[currentselected].blinktimer=0;
-			if (currentselected==0)
-			{
-				currentselected=nomi;
-			}
-			currentselected--;
-			menuitem[currentselected].selected=true;	
-			Sleep(150);	
-		}
-		else if (GetKeyState(VK_DOWN) < 0)
-		{
-			menuitem[currentselected].selected=false;
-			menuitem[currentselected].blinktimer=0;
-			if (currentselected==nomi-1)
-			{
-				currentselected=-1;
-			}
-			currentselected++;
-			menuitem[currentselected].selected=true;
-			Sleep(150);
+			currentselected = get_menu_updown(menuitem, nomi, currentselected);
 		}
 	}
 }
@@ -2178,7 +2342,7 @@ int twoplayerscreen()
 			{
 				Sleep(50);
 				loadingscreen();
-				game("twoplayerclassic", true, 0, "blue", 15, 80, 30);
+				game("twoplayerclassic", true, 0, 15, 80, 30);
 				system("CLS");
 				changecolor("blue");
 				return 0;
@@ -2187,7 +2351,7 @@ int twoplayerscreen()
 			{
 				Sleep(50);
 				loadingscreen();
-				game("twoplayerconflict", true, 0, "blue", 15, 50, 30);
+				game("twoplayerconflict", true, 0, 15, 50, 30);
 				system("CLS");
 				changecolor("blue");
 				return 0;
@@ -2210,50 +2374,30 @@ int twoplayerscreen()
 			system("CLS");
 			return 0;
 		}
-		else if (GetKeyState(VK_UP) < 0)
+		else
 		{
-			menuitem[currentselected].selected=false;
-			menuitem[currentselected].blinktimer=0;
-			if (currentselected==0)
-			{
-				currentselected=nomi;
-			}
-			currentselected--;
-			menuitem[currentselected].selected=true;	
-			Sleep(150);	
-		}
-		else if (GetKeyState(VK_DOWN) < 0)
-		{
-			menuitem[currentselected].selected=false;
-			menuitem[currentselected].blinktimer=0;
-			if (currentselected==nomi-1)
-			{
-				currentselected=-1;
-			}
-			currentselected++;
-			menuitem[currentselected].selected=true;
-			Sleep(150);
+			currentselected = get_menu_updown(menuitem, nomi, currentselected);
 		}
 	}
 }
 
-void drawcredit(string text, int y, bool outline=false)
+void drawcredit(string text, int y, bool outline=false, int x=59)
 {
 	if (outline==true)
 	{
-		locate (59-text.size()/2, y-1);
+		locate (x-text.size()/2, y-1);
 		for (int i=0; i<text.size(); i++)
 		{
 			cout << "-";
 		}	
-		locate (59-text.size()/2, y+1);
+		locate (x-text.size()/2, y+1);
 		for (int i=0; i<text.size(); i++)
 		{
 			cout << "-";
 		}
 	}
 	
-	locate (59-text.size()/2, y);
+	locate (x-text.size()/2, y);
 	cout << text;
 }
 
@@ -2347,6 +2491,7 @@ void hwrite(string text)
 
 int helpscreen()
 {
+
 	Sleep(100);
 	system("CLS");
 	locate(0, 0);
@@ -2369,6 +2514,9 @@ int helpscreen()
 	hwrite("GAME MODES:");
 	hwrite("");
 	hwrite("");
+	hwrite("ENDLESS");
+	hwrite("In this gamemode you control a plane.");
+	hwrite("Your objective is to survival as long as possible and get the most score");
 
 	
 	hwrite("(THIS PAGE IS NOT FINISHED. I WILL FINISH IT WHEN THE GAME IS DONE.)");
@@ -2388,19 +2536,292 @@ int helpscreen()
 		if (GetKeyState(VK_ESCAPE) < 0)
 		{
 			skip=false;
+			Sleep(200);
 			return 0;
 		}
 	}
 	
 }
 
-int main(int argc, char *argv[])
-{	
-	int nomi=9, currentselected; //nomi: number of menu items
+void savecolor(string mycolor)
+{
+	gamecolor=mycolor;
+	clearmyfile(colorfilelocation);
+	ofstream tempcolorfile(colorfilelocation);
+	tempcolorfile << gamecolor;
+	tempcolorfile.close();
+}
+
+int skinscreen()
+{
+	int nomi=13, currentselected;
+	longmenuitem menuitem[nomi];
+
+	system("CLS");
+
+	
+	for(int i=0;i<12;i++)
+	{
+		menuitem[i].text=allSkins[i].name;
+	}
+	
+	menuitem[12].text="RETURN";
+
+	currentselected=0;
+	menuitem[currentselected].selected=true;
+
+	drawplane(100, 11);
+	drawcredit("selected", 11, true, 100-10);
+
+	int planexmenu=100, planeymenu=17;
+
+	locate(0, 0);
+	while (true)
+	{
+		for (int i=-1;i<3;i++)
+		{
+			locate ( planexmenu-14, planeymenu+i);
+			cout << "                 ";
+		}
+		
+		if (currentselected!=12)
+		{
+			drawcredit("hovering", planeymenu+1 , true, planexmenu-10);
+			locate ( planexmenu-allSkins[currentselected].skinsize[0]/2, planeymenu-1);	 cout << allSkins[currentselected].skin[0];
+			locate ( planexmenu-allSkins[currentselected].skinsize[1]/2, planeymenu);  cout << allSkins[currentselected].skin[1];
+			locate ( planexmenu-allSkins[currentselected].skinsize[2]/2, planeymenu+1);  cout << allSkins[currentselected].skin[2];
+			locate ( planexmenu-allSkins[currentselected].skinsize[3]/2, planeymenu+2);cout << allSkins[currentselected].skin[3];
+			locate (0, 0);
+		}
+	
+		for (int i=0; i<nomi; i++)
+		{
+			locate(0, 0);
+			menuitem[i].draw(i);
+			locate(0, 0);
+		}
+
+		Sleep(50);
+		if (GetKeyState(VK_RETURN) < 0 || GetKeyState(VK_SPACE) < 0)
+		{
+			if (currentselected == nomi-1)
+			{
+				Sleep(100);
+				system("CLS");
+				return 0;
+			}
+			
+			saveskin(currentselected);
+			
+			getskin();
+			
+			
+			
+			changecolor("black");
+			Sleep(100);
+			changecolor("blue");
+			system("CLS");
+			drawplane(100, 11);
+			drawcredit("selected", 11, true, 100-10);
+		}
+		else if (GetKeyState(VK_ESCAPE) < 0)
+		{
+			Sleep(75);
+			system("CLS");
+			return 0;
+		}
+		else
+		{
+			currentselected = get_menu_updown(menuitem, nomi, currentselected);
+		}
+	}
+}
+
+int colorscreen()
+{
+	int nomi=13, currentselected;
+	longmenuitem menuitem[nomi];
+	changecolor(gamecolor);
+	system("CLS");
+
+	menuitem[0].text= "BLUE";
+	menuitem[1].text= "DARK BLUE";
+	menuitem[2].text= "GREEN";
+	menuitem[3].text= "DARK GREEN";
+	menuitem[4].text= "WHITE";
+	menuitem[5].text= "AQUA";
+	menuitem[6].text= "DARK AQUA";
+	menuitem[7].text= "PINK";
+	menuitem[8].text= "PURPLE";
+	menuitem[9].text= "LIGHT PURPLE";
+	menuitem[10].text="DARK YELLOW";
+	menuitem[11].text="YELLOW";
+	menuitem[12].text="RETURN";
+
+	currentselected=0;
+	menuitem[currentselected].selected=true;
+
+	locate(0, 0);
+	while (true)
+	{
+		for (int i=0; i<nomi; i++)
+		{
+			locate(0, 0);
+			menuitem[i].draw(i);
+			locate(0, 0);
+		}
+
+		Sleep(50);
+		if (GetKeyState(VK_RETURN) < 0 || GetKeyState(VK_SPACE) < 0)
+		{
+			if (currentselected == 0)
+			{
+				savecolor("blue");	
+			}
+			else if (currentselected == 1)
+			{
+				savecolor("dark blue");
+			}
+			else if (currentselected == 2)
+			{
+				savecolor("green");
+			}
+			else if (currentselected == 3)
+			{
+				savecolor("dark green");
+			}
+			else if (currentselected == 4)
+			{
+				savecolor("white");
+			}
+			else if (currentselected == 5)
+			{
+				savecolor("aqua");
+			}
+			else if (currentselected == 6)
+			{
+				savecolor("dark aqua");
+			}
+			else if (currentselected == 7)
+			{
+				savecolor("pink");
+			}
+			else if (currentselected == 8)
+			{
+				savecolor("purple");
+			}
+			else if (currentselected == 9)
+			{
+				savecolor("light purple");
+			}
+			else if (currentselected == 10)
+			{
+				savecolor("dark yellow");
+			}
+			else if (currentselected == 11)
+			{
+				savecolor("yellow");
+			}
+			else if (currentselected == nomi-1)
+			{
+				Sleep(100);
+				system("CLS");
+				return 0;
+			}
+			else
+			{
+				changecolor("red");
+				Sleep(100);
+			}
+			changecolor(gamecolor);
+		}
+		else if (GetKeyState(VK_ESCAPE) < 0)
+		{
+			Sleep(75);
+			system("CLS");
+			return 0;
+		}
+		else
+		{
+			currentselected = get_menu_updown(menuitem, nomi, currentselected);
+		}
+	}
+}
+
+int cosmeticscreen()
+{
+
+	int nomi=3, currentselected;
 	menuitem menuitem[nomi+1];
 
+	system("CLS");
 
-	resizeatari();
+	menuitem[0].text="COLORS";
+	menuitem[1].text="SKINS";
+	menuitem[2].text="RETURN";
+
+	currentselected=0;
+	menuitem[currentselected].selected=true;
+
+	locate(0, 0);
+	while (true)
+	{
+		for (int i=0; i<nomi; i++)
+		{
+			locate(0, 0);
+			menuitem[i].draw(i);
+			locate(0, 0);
+		}
+
+		Sleep(50);
+		if (GetKeyState(VK_RETURN) < 0 || GetKeyState(VK_SPACE) < 0)
+		{
+			if (currentselected == 0)
+			{
+				Sleep(100);
+				colorscreen();
+				changecolor("blue");
+			}
+			else if (currentselected == 1)
+			{
+				Sleep(100);
+				skinscreen();
+			}
+			else if (currentselected == nomi-1)
+			{
+				Sleep(100);
+				return 0;
+			}
+			else
+			{
+				changecolor("red");
+				Sleep(100);
+				changecolor("blue");
+			}
+		}
+		else if (GetKeyState(VK_ESCAPE) < 0)
+		{
+			Sleep(75);
+			system("CLS");
+			return 0;
+		}
+		else
+		{
+			currentselected = get_menu_updown(menuitem, nomi, currentselected);
+		}
+	}
+}
+
+int main(int argc, char *argv[])
+{	
+
+
+	int nomi=9, currentselected; //nomi: number of menu items
+	menuitem menuitem[nomi+1];
+	//resizeatari();
+	getcolor();
+	getskin();
+
 	
 	ShowConsoleCursor(false);
 	
@@ -2408,10 +2829,10 @@ int main(int argc, char *argv[])
 	menuitem[1].text="BOSS FIGHT";
 	menuitem[2].text="DOUBLE PLAYER";
 	menuitem[3].text="MULTI PLAYER";
-	menuitem[4].text="SETTINGS";
-	menuitem[5].text="CREDITS";
-	menuitem[6].text="HELP";
-	menuitem[7].text="SKINS";
+	menuitem[4].text="CUSTOMIZATION";
+	menuitem[5].text="SETTINGS";
+	menuitem[6].text="CREDITS";
+	menuitem[7].text="HELP";
 	menuitem[8].text="EXIT TO DESKTOP";
 
 	
@@ -2482,6 +2903,10 @@ int main(int argc, char *argv[])
 		
 
 		Sleep(50);
+		if (GetKeyState(VK_UP) < 0 || GetKeyState(VK_DOWN) < 0)
+		{
+			firsttime=false;
+		}
 		if (GetKeyState(VK_RETURN) < 0 || GetKeyState(VK_SPACE) < 0)
 		{
 			firsttime=false;
@@ -2489,11 +2914,11 @@ int main(int argc, char *argv[])
 			{
 				loadingscreen();
 				system("CLS");
-				game("campaign", true , 0, "blue", 15, 50, 30);
+				game("campaign", true , 0, 15, 50, 30);
 				system("CLS");
 				changecolor("blue");
 			}
-			else if (currentselected == 2)
+			else if (currentselected == 2)	
 			{
 				Sleep(50);
 				twoplayerscreen();
@@ -2508,31 +2933,38 @@ int main(int argc, char *argv[])
 			}
 			else if (currentselected == 4)
 			{
-				Sleep(50);
-				settingsscreen();
+				Sleep(70);
+				cosmeticscreen();
 				system("CLS");
 			}
 			else if (currentselected == 5)
 			{
 				Sleep(50);
-				creditsscreen();
+				settingsscreen();
 				system("CLS");
 			}
 			else if (currentselected == 6)
 			{
 				Sleep(50);
+				creditsscreen();
+				system("CLS");
+			}
+			else if (currentselected == 7)
+			{
+				Sleep(50);
 				helpscreen();
 				system("CLS");
 			}
-//			else if (currentselected == 7)
-//			{
-//				sleep(70);
-//				//skinscreen();
-//				system("CLS");
-//			}
 			else if (currentselected == nomi-1)
 			{
-				return 0;
+				Sleep(70);
+				changecolor("black");
+				
+				if (ynprompt("ARE YOU SURE YOU WANT TO EXIT THE GAME?")== 1)
+				{
+					return 0;
+				}
+				changecolor("blue");
 			}
 			else
 			{
@@ -2541,31 +2973,19 @@ int main(int argc, char *argv[])
 				changecolor("blue");
 			}
 		}
-		else if (GetKeyState(VK_UP) < 0)
+		else if (GetKeyState(VK_ESCAPE) < 0)
 		{
-			menuitem[currentselected].selected=false;
-			menuitem[currentselected].blinktimer=0;
-			if (currentselected==0)
-			{
-				currentselected=nomi;
-			}
-			currentselected--;
-			menuitem[currentselected].selected=true;	
-			Sleep(150);
-			firsttime=false;
+			Sleep(70);
+			changecolor("black");	
+				if (ynprompt("ARE YOU SURE YOU WANT TO EXIT THE GAME?")== 1)
+				{
+					return 0;
+				}
+				changecolor("blue");
 		}
-		else if (GetKeyState(VK_DOWN) < 0)
+		else
 		{
-			menuitem[currentselected].selected=false;
-			menuitem[currentselected].blinktimer=0;
-			if (currentselected==nomi-1)
-			{
-				currentselected=-1;
-			}
-			currentselected++;
-			menuitem[currentselected].selected=true;
-			Sleep(150);
-			firsttime=false;
+			currentselected = get_menu_updown(menuitem, nomi, currentselected);
 		}
 	}
 }
