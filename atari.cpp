@@ -5,9 +5,19 @@
 #include <cstdlib>
 #include <time.h>
 #include <thread>
+
+
 //#include "atariplane.ico"
 using namespace std;
 //#define _WIN32_WINNT 0x0500
+
+void locate ( int x, int y )
+{
+    COORD position;
+    position.X = x;
+    position.Y = y;
+    SetConsoleCursorPosition ( GetStdHandle ( STD_OUTPUT_HANDLE ), position );
+}
 
 class planeSkins {
 	
@@ -30,6 +40,9 @@ class planeSkins {
     
 };
 
+
+
+
 const planeSkins allSkins[12] = {
 	{"AURORA",      {"A", "<=H=>", "Y", "<A>"}},
 	{"CHRIST",      {"|", "==+==", "|", "|"}},
@@ -46,10 +59,110 @@ const planeSkins allSkins[12] = {
 	};
 	
 
+class bossClass{
+	
+    public:
+    	
+		string name;
+		short int x, y, weight;
+		int fx=0;
+    	int fy=0;
+        bool alive=false;
+        short int hp;
+        short int maxhp;
+        
+        bossClass(string name, short int x, short int y, short int weight, short int hp)
+		{
+			this->name=name;
+			this->x=x;
+			this->y=y;
+			this->weight=weight;
+			this->hp=hp;
+			this->maxhp = hp;
+			//dirty code much?
+			this->fx=x*1000;
+    		this->fy=y* 1000;
+    		
+		}
+    	
+   
+   void alignBody(short int x)
+   {
+   		if(x > this->x )
+			this->fx+=1000/weight;
+		else if(x < this->x)
+			this->fx-=1000/weight;
+			
+  		if(y < 2)
+			this->fy+=200/weight;
+  		
+  		this->y=fy/1000;
+  		this->x=fx/1000;
+  		
+   }
+   
+   short int bossfire()
+   {
+		static short int fire=1000;
+//			locate(70, 18);
+//					cout << "BOSS FIRE : " << fire;
+					
+		if(fire==0)
+		{
+			fire=1000;
+		}
+			
+		if (fire%200==0 && fire > 250)
+		{
+			//jet
+			fire--;
+			return 3;
+		}
+		
+		if(fire%15==0 && fire > 250)
+		{
+			//barrier
+			fire--;
+			return 1;
+		}
+		if (fire%50==0 && fire > 250)
+		{
+			//enemy
+			fire--;
+			return 2;
+		}
+		if (fire < 200 && fire % 30 == 0)
+		{
+			fire--;
+			//SPECIAL
+			
+			return 4;
+		}
+		
+		
+			fire--;
+			return 0;
 
+   }
+   
+	bool hitbox(short int px, short int py)
+	{
+		if ( px < x+3 && px > x-3 && py == y )
+		{
+			return true;
+		}
+		if ( px < x+2 && px > x-2 && py == y-2 )
+		{
+			return true;
+		}
+		return false;
+	}
+   
+ 
+      
+};
 
-
-
+bossClass boss[1]={{"J16", 30, -7, 2, 50}};
 
 
 
@@ -66,11 +179,7 @@ void resizeatari()
 	MoveWindow(console, 150, 100, 1185, 662, TRUE);
 }
 
-const short int fps=35;
-void fpswait()
-{	
-	Sleep(1000/fps); 	
-}
+
 
 
 
@@ -293,11 +402,14 @@ struct ammo{
 };
 
 struct planeclass:ammo{
-	int x;
-	int y;
+	short int x, y;
 	bool dead=false;
 	int guncooldown=0;
 };
+
+
+
+
 void clearinputbuffer()
 {
 	cin.clear();
@@ -314,13 +426,9 @@ void ShowConsoleCursor (bool showFlag)
     SetConsoleCursorInfo (out, &cursorInfo);
 }
 
-void locate ( int x, int y )
-{
-    COORD position;
-    position.X = x;
-    position.Y = y;
-    SetConsoleCursorPosition ( GetStdHandle ( STD_OUTPUT_HANDLE ), position );
-}
+
+
+
 
 bool ynprompt(string text, int y=14)
 {
@@ -547,25 +655,46 @@ void drawjet (int enemyx,int enemyy, bool direc)
 	}
 }
 
-void subtitle(string sub, int startofscreen, int sizeofscreen, string river)
+void subtitle(string sub, int startofscreen, int sizeofscreen, string river, bool bypass=false, short int yadd=0)
 {
 	string error="Not an odd number of characters";
 
 	
-	locate (startofscreen+sizeofscreen/2-river.length()/2, 28);
+	locate (startofscreen+sizeofscreen/2-river.length()/2, 27+yadd);
 	cout << river;
 	
-	if (sub.length()%2!=0)
+	if (sub.length()%2!=0 || bypass==true)
 	{
-		locate (startofscreen+sizeofscreen/2-sub.length()/2, 28);
+		locate (startofscreen+sizeofscreen/2-sub.length()/2, 27+yadd);
 		cout << sub;
 	}
 	else 
 	{
-		locate (startofscreen+sizeofscreen/2-error.length()/2, 28);
+		locate (startofscreen+sizeofscreen/2-error.length()/2, 27+yadd);
 		cout << error ;
 	}
 	locate (0, 0);
+}
+
+void percentsubtitle(short int ps_current, short int ps_max, int startofscreen, int sizeofscreen, string river, short int yadd=0, float sizemult=1)
+{
+	if(ps_current <= 0)
+	{
+		return;
+	}
+	
+	short int ps_size=(sizeofscreen-10)*sizemult;
+	
+	int filler_size = float(ps_current)/float(ps_max)*ps_size;
+	
+	string displayer="";
+	for(int i=0;i<filler_size;i++)
+	{
+		displayer += "#";
+	}
+	
+	subtitle(displayer, startofscreen, sizeofscreen, river, true, yadd);
+	
 }
 
 void save(int score, int highscore)
@@ -671,7 +800,19 @@ class bossclass
 //#############################################################
 //-------------------------------------------------------------
 
+void drawboss(short int bossid)
+{
+//	locate ( planex-mySkin.skinsize[0]/2, planey-1); cout << mySkin.skin[0];
+//	locate ( planex-mySkin.skinsize[1]/2, planey);   cout << mySkin.skin[1];
+//	locate ( planex-mySkin.skinsize[2]/2, planey+1); cout << mySkin.skin[2];
+//	locate ( planex-mySkin.skinsize[3]/2, planey+2); cout << mySkin.skin[3];
+//	locate (0, 0);
 
+	if(boss[bossid].y-1 >=0) {locate(boss[bossid].x-1, boss[bossid].y-1); cout << "A-A";}
+	if(boss[bossid].y >=0) {locate(boss[bossid].x-2, boss[bossid].y); cout << "<===>";}
+	if(boss[bossid].y+1 >=0) {locate(boss[bossid].x, boss[bossid].y+1); cout << "X";}
+	if(boss[bossid].y+2 >=0) {locate(boss[bossid].x-1, boss[bossid].y+2); cout << "/-\\";}
+}
 
 	
 bool showloadingscreen=file_read.inttype(settingsfilelocation, 9);
@@ -686,6 +827,12 @@ char controlfire = file_read.chartype(settingsfilelocation, 5);
 char controlpause = file_read.chartype(settingsfilelocation, 6);
 char controlreload = file_read.chartype(settingsfilelocation, 7);
 
+short int fps= file_read.inttype(settingsfilelocation, 12);
+void fpswait()
+{	
+	Sleep(1000/fps); 	
+}
+
 string gamecolor;
 
 void getcolor()
@@ -695,32 +842,21 @@ void getcolor()
 	tempcolorfile3.close();
 }
 
-int game(const string mode, const bool infinite, int level, const int startofscreen, const int sizeofscreen, int sleeptimer)
+int game(const string mode, const bool infinite, int level, const int startofscreen, const int sizeofscreen, int sleeptimer, short int bossid=0, short int setdifficulty=0)
 {	
 	int sleepsaver=sleeptimer;
 	
 	srand(time(0));
-	fstream scorefile(scorefilelocation);
+
 	int endofscreen=startofscreen+sizeofscreen;
 	int sleeptimersave=sleeptimer;
-	bool dead=false, stopspawning=false;
-	long long int score=0, highscore;
-	int 
-	numberofbullets=0, 
-	enemygenrandom=10,
-	enemygendivider=25,
-	barriergenrandom=10,
-	barriergendivider=30;
-	
-	
-	
 
-	
-	scorefile >> highscore;
+	long long int score=0, highscore=0, bossdeathscore=0;
+	ifstream tempfile(scorefilelocation);	
+	tempfile >> highscore;
+	tempfile.close();
 
-	
-	int ebgdd=enemygendivider-barriergendivider;
-	int numberofplanes=0;
+	short int numberofplanes=0;
 	
 	
 	if (mode=="twoplayerclassic")
@@ -733,7 +869,7 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 	}
 	
 	planeclass plane[numberofplanes+1];
-	numberofbullets=numberofplanes*2;
+	short int numberofbullets=numberofplanes*2;
 	
 	bulletclass bullet[numberofbullets][10000];
 	static barrierclass barrier[10000];
@@ -754,15 +890,28 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 		//used to be START:
 		sleeptimer=sleepsaver;
 		//arguments
-		enemygendivider=40, 
-		barriergendivider=50,
-		ebgdd=enemygendivider-barriergendivider;
-		if (ebgdd < 0)
-		{
-			ebgdd*=-1;
-		}	
+		
+		
+			
 		changecolor(gamecolor);
 
+			bool dead=false, deadwas=false, stopspawning=false;
+			long long int deadwasscore=0;
+			short int planehp=5;
+	
+			int
+			enemygenrandom=10,
+			enemygendivider=40, 
+			barriergenrandom=10,
+			barriergendivider=50,
+			stopspawningscore=500;
+			int ebgdd=enemygendivider-barriergendivider;
+			
+			ebgdd=enemygendivider-barriergendivider;
+			if (ebgdd < 0)
+			{
+				ebgdd*=-1;
+			}
 		//arguments end
 
 		locate (0, 0);
@@ -778,8 +927,7 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 		barriergencounter=0,
 		difficulty=0;
 		score=0, dead=false;
-		
-		
+
 		for (int i=0; i<numberofplanes;i++)
 		{
 			plane[i].resetammo();
@@ -806,7 +954,12 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 		//generating enemies and jets
 		for (int i=0; i<10000; i++)
 		{
-			if (rand()%8==1)
+			enemy[i].isjet=false;
+		}
+		
+		for (int i=0; i<10000; i++)
+		{
+			if (rand()%6==0)
 			{
 				enemy[i].isjet=true;
 			}
@@ -843,13 +996,22 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 			}
 		}
 		
+			barriergendivider=barriergendivider-setdifficulty;
+			enemygendivider=enemygendivider-setdifficulty;
 		
+//		enemygendivider=5,
+//		barriergendivider=100;
 	
 		
 		while (dead!=true)
 		{
 
 			thread fpsregulator(fpswait);
+			
+
+
+			
+			
 			if (infinite==true)
 			{
 				if (score%150==0 && score!=0)
@@ -866,6 +1028,8 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 					}
 				}
 			}	
+			
+			
 
 			//Sleep(sleeptimer);
 			score++;
@@ -902,6 +1066,9 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 			cout << "                   ";
 			locate (textlocation, 2);
 			cout << "SCORE: " << score/10;
+			
+			
+	
 			
 			if (infinite==true)
 			{
@@ -1209,11 +1376,10 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 						plane[pc].turn=1;
 					}
 					subtitle("RELOADING", startofscreen, sizeofscreen, river);
-					if (score-200>=plane[pc].isave)
+					if (score-100>=plane[pc].isave)
 					{
 						plane[pc].current=plane[pc].max;
-						plane[pc].turn=0;
-						
+						plane[pc].turn=0;	
 					}
 				}
 			}
@@ -1534,6 +1700,15 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 								}
 							}
 						}
+						
+						if(mode == "bossfight")
+						{
+							if (boss[bossid].hitbox(bullet[h][j].x, bullet[h][j].y)==true)
+							{
+								bullet[h][j].alive=false;
+								boss[bossid].hp--;	
+							}
+						}
 					}
 					else
 					{
@@ -1542,12 +1717,185 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 				}
 			}
 			
+			
+			
+			
+			
+			
+			
 		
-			if (score > 500 && mode=="bossfight")
+		//	stopspawningscore = 200, dead=false;// I AM IRONMAN!!! 
+			
+			
+			
+			
+			if (score > stopspawningscore && mode=="bossfight")// && boss[bossid].alive==true)
 			{
 				stopspawning=true;
-				score--;
+				if(boss[bossid].hp > 0)
+				{
+					boss[bossid].alive=true;
+				}
+				else if (boss[bossid].alive==true && boss[bossid].hp <=0)
+				{
+					bossdeathscore = score;
+					boss[bossid].alive=false;
+				}
+				else
+				{
+					dead=false;
+					if (score < bossdeathscore + 20)
+					{
+						system("color f7");
+					
+						system("CLS");
+					}
+					else if (score < bossdeathscore + 60)
+					{
+				
+						system("color f7");
+					}
+					else if (score < bossdeathscore + 80)
+					{
+						system("color 78");
+					}
+					else if (score < bossdeathscore + 150)
+					{
+						changecolor(gamecolor);
+					}
+					else
+					{
+						fpsregulator.join();
+						return 1;
+					}
+				}
+				
+				if (boss[bossid].alive==true)
+				{	
+					percentsubtitle(planehp, 5, startofscreen, sizeofscreen, river, -1, 0.25);
+
+					
+					percentsubtitle(boss[bossid].hp, boss[bossid].maxhp, startofscreen, sizeofscreen, river, 1);
+					boss[bossid].alignBody(plane[0].x);
+					drawboss(bossid);
+					
+					if(score<stopspawningscore+200)
+					{
+						boss[bossid].hp=boss[bossid].maxhp;
+					}
+					
+					if(score>stopspawningscore+200)
+					{
+						
+						int bf=boss[bossid].bossfire();
+						
+					
+						if(bf==1)
+						{
+							barrier[barrierid].alive=true;
+							barrier[barrierid].y=boss[bossid].y+3;
+							barrier[barrierid].x=boss[bossid].x;
+							barrier[barrierid-16].alive=false;
+							barrierid++;
+						}
+						if (bf == 2)
+						{
+							for(int i=0;i<2;i++)
+							{
+								enemy[enemyid].alive=true;
+								enemy[enemyid].y=0;
+								enemy[enemyid].x=(startofscreen+endofscreen)/2;
+								enemy[enemyid].direction=i;
+								enemy[enemyid].isjet=false;
+								enemy[enemyid-30].alive=false;
+								enemyid++;
+							}
+						}
+						if (bf == 3)
+						{
+							for(int i=0;i<2;i++)
+							{
+								enemy[enemyid].alive=true;
+								enemy[enemyid].y=0;
+								enemy[enemyid].x=startofscreen;
+								enemy[enemyid].direction=!i;
+								enemy[enemyid].isjet=true;
+								enemy[enemyid-30].alive=false;
+								enemyid++;
+							}
+							enemy[enemyid-1].x=endofscreen;
+						}
+						if (bf == 4)
+						{
+							for(int i=0;i<9;i++)
+							{
+								barrier[barrierid].alive=true;
+								barrier[barrierid].y=0;
+								barrier[barrierid].x=startofscreen+5*i+4;
+								barrier[barrierid-16].alive=false;
+								barrierid++;	
+							}
+							int bomberexcluder=rand()%8;
+							barrier[barrierid-1-bomberexcluder].alive=false;
+							barrier[barrierid-1-bomberexcluder-1].alive=false;
+						}
+					}
+					
+					//HP SYSTEM
+					if(deadwas==true)
+					{
+						deadwas=false;
+					}
+					if(score < deadwasscore + 10)
+					{
+						dead=false;
+					}
+					else if (score == deadwasscore + 10)
+					{
+						changecolor(gamecolor);
+					}
+					if(dead==true)
+					{
+						
+						if(deadwas==false)
+						{
+							planehp--, deadwas = true;  
+							changecolor("red");
+							deadwasscore = score;
+						}
+						if (planehp!=0)
+						{
+							dead=false;
+						}
+						
+					} 
+				}
 			}
+			
+			//plane goes to middle
+			if (stopspawning==true && mode=="bossfight" && score < stopspawningscore + 150)
+			{
+				//boss[bossid].alive=true;
+				planehp=5;
+				if (plane[0].x>startofscreen+sizeofscreen/2)
+				{
+					plane[0].x--;	
+				}	
+				else if(plane[0].x<startofscreen+sizeofscreen/2)
+				{
+					plane[0].x++;
+				}
+				if (plane[0].y>14)
+				{
+					plane[0].y--;
+				}
+				else if(plane[0].y<14)
+				{
+					plane[0].y++;
+				}
+			}
+			
+			
 		
 			//enemy spawner
 			if (score > 5 && stopspawning != true)
@@ -1585,6 +1933,7 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 			}
 			//fixed fps babyyyyyy
 			fpsregulator.join();
+			
 	//---end main game WHILE
 		}
 		
@@ -2034,7 +2383,7 @@ int controlsscreen()
 
 int settingsscreen()
 {
-	int nomi=5, currentselected;
+	int nomi=6, currentselected;
 	menuitem menuitem[nomi+1];
 	Sleep(20);
 	system("CLS");
@@ -2043,6 +2392,7 @@ int settingsscreen()
 	menuitem[1].text="SHOW LOADING SCREENS";
 	menuitem[2].text="SHOW MENU LOADING SCREEN";
 	menuitem[3].text="RESET HIGHSCORE";
+	menuitem[4].text="SPEED";
 	menuitem[nomi-1].text="RETURN";
 
 	currentselected=0;
@@ -2090,6 +2440,27 @@ int settingsscreen()
 			{
 				
 				cout << "  " << (float)menuhighscore/10;
+			}
+			if(i==4)
+			{
+				cout << " ";
+				switch (fps)
+				{
+					case 20:
+						cout << "LOW";
+						break;
+					case 30:
+						cout << "MEDIUM";
+						break;
+					case 45:
+						cout << "HIGH";
+						break;
+					case 60:
+						cout << "QUICK";
+						break;
+					default:
+						cout << "????";
+				}
 			}
 			locate(0, 0);
 		}
@@ -2143,6 +2514,83 @@ int settingsscreen()
 					tempfile.close();
 				}
 				changecolor("blue");
+			}
+			else if(currentselected == 4)
+			{
+				system("CLS");
+				cout << "USE ARROW KEYS TO CHANGE SPEED\n";
+				
+				while(true)
+				{
+					Sleep(100);
+					locate(0, 2); cout << "            "; locate(0, 2);
+					switch (fps)
+					{
+						case 20:
+							cout << "LOW";
+							break;
+						case 30:
+							cout << "MEDIUM";
+							break;
+						case 45:
+							cout << "HIGH";
+							break;
+						case 60:
+							cout << "QUICK";
+							break;
+						default:
+							cout << "????";
+					}
+					if (GetKeyState(VK_RIGHT) < 0)
+					{
+						Sleep(100);
+						if(fps == 20)
+						{	
+							fps = 30;
+						}
+						else if (fps == 30)
+						{
+							fps = 45;	
+						}
+						else if (fps == 45)
+						{
+							fps = 60;	
+						}
+						else
+						{
+							fps = 60;
+						}	
+					}
+					else if (GetKeyState(VK_LEFT) < 0)
+					{
+						Sleep(100);
+						if (fps == 30)
+						{
+							fps = 20;	
+						}
+						else if (fps == 45)
+						{
+							fps = 30;	
+						}
+						else if (fps == 60)
+						{
+							fps = 45;	
+						}
+						else
+						{
+							fps = 20;
+						}
+					}
+					else if(GetKeyState(VK_RETURN) < 0 || GetKeyState(VK_SPACE) < 0)
+					{
+						Sleep(100);
+						break;
+					}
+				}
+				system("CLS");
+				file_write.inttype(settingsfilelocation, 12, fps);
+				Sleep(70);
+				
 			}
 			else if (currentselected == nomi-1)
 			{
@@ -2812,6 +3260,117 @@ int cosmeticscreen()
 	}
 }
 
+int bossscreen()
+{
+	int nomi=6, currentselected;
+	menuitem menuitem[nomi];
+
+	system("CLS");
+
+	menuitem[0].text="J16";
+	menuitem[1].text="?";
+	menuitem[2].text="?";
+	menuitem[3].text="?";
+	menuitem[4].text="?";
+	
+	
+	menuitem[5].text="RETURN";
+
+	currentselected=0;
+	menuitem[currentselected].selected=true;
+
+//	drawplane(100, 11);
+//	drawcredit("selected", 11, true, 100-10);
+//
+//	int planexmenu=100, planeymenu=17;
+
+	locate(0, 0);
+	while (true)
+	{
+//		for (int i=-1;i<3;i++)
+//		{
+//			locate ( planexmenu-14, planeymenu+i);
+//			cout << "                 ";
+//		}
+//		
+//		if (currentselected!=12)
+//		{
+//			drawcredit("hovering", planeymenu+1 , true, planexmenu-10);
+//			locate ( planexmenu-allSkins[currentselected].skinsize[0]/2, planeymenu-1);	 cout << allSkins[currentselected].skin[0];
+//			locate ( planexmenu-allSkins[currentselected].skinsize[1]/2, planeymenu);  cout << allSkins[currentselected].skin[1];
+//			locate ( planexmenu-allSkins[currentselected].skinsize[2]/2, planeymenu+1);  cout << allSkins[currentselected].skin[2];
+//			locate ( planexmenu-allSkins[currentselected].skinsize[3]/2, planeymenu+2);cout << allSkins[currentselected].skin[3];
+//			locate (0, 0);
+//		}
+	
+		for (int i=0; i<nomi; i++)
+		{
+			locate(0, 0);
+			menuitem[i].draw(i);
+			locate(0, 0);
+		}
+
+		Sleep(50);
+		if (GetKeyState(VK_RETURN) < 0 || GetKeyState(VK_SPACE) < 0)
+		{
+			if (currentselected == nomi-1)
+			{
+				Sleep(100);
+				system("CLS");
+				return 0;
+			}
+			else if (currentselected == 0)
+			{
+				Sleep(100);
+				loadingscreen();
+				system("CLS");
+				if (game("bossfight", false , 0, 15, 50, 30, currentselected, 5) == 1)
+				{
+					system("CLS");
+					changecolor("black");
+				//	clearinputbuffer();
+					Sleep(2000);
+					cout << "CONGRATULATIONS ON BEATING " << boss[0].name << ", PILOT." << endl;
+					Sleep(2000);
+					cout << "YOU'VE UNLOCKED THE NEXT BOSS." << endl;
+					Sleep(2000);
+					cout << endl << endl << "press [SPACE] to continue.";
+					
+					while(true)
+					{
+						Sleep(70);
+						if(GetKeyState(VK_SPACE) < 0)
+						{
+							break;
+						}
+					}
+				}
+				Sleep(70);
+				changecolor("blue");
+				system("CLS");
+			}
+			
+			
+//			changecolor("black");
+//			Sleep(100);
+//			changecolor("blue");
+//			system("CLS");
+//			drawplane(100, 11);
+//			drawcredit("selected", 11, true, 100-10);
+		}
+		else if (GetKeyState(VK_ESCAPE) < 0)
+		{
+			Sleep(75);
+			system("CLS");
+			return 0;
+		}
+		else
+		{
+			currentselected = get_menu_updown(menuitem, nomi, currentselected);
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {	
 
@@ -2915,6 +3474,14 @@ int main(int argc, char *argv[])
 				loadingscreen();
 				system("CLS");
 				game("campaign", true , 0, 15, 50, 30);
+				system("CLS");
+				changecolor("blue");
+			}
+			if (currentselected == 1)
+			{
+				system("CLS");
+				Sleep(70);
+				bossscreen();
 				system("CLS");
 				changecolor("blue");
 			}
