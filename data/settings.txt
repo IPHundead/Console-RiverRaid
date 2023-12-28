@@ -8,3 +8,5 @@ controlreload "R"
 
 show loading screens "1"
 show menu loading screen "1"
+
+fps "60"
