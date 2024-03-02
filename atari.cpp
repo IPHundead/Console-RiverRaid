@@ -45,7 +45,7 @@ class planeSkins {
 
 const planeSkins allSkins[12] = {
 	{"AURORA",      {"A", "<=H=>", "Y", "<A>"}},
-	{"CHRIST",      {"|", "==+==", "|", "|"}},
+	{"CHRIST",      {"|", "--+--", "|", "|"}},
 	{"SPACESHIP",   {"A", "<H=H>", "T", "^A^"}},
 	{"RETRO",       {"A", "[===]", "H", "[=]"}},
 	{"YACHT",       {R"(/X\)", "|XXX|", "|XXX|", R"(\X/)"}},
@@ -243,12 +243,13 @@ class file_read
 			}
 			catch(...)
 			{
+				
 				system("CLS");
 				system("color 0f");
-				cerr << "ERROR! please extract the file before running the program, or check if the data files are correct.\n\n (true error : STOI function returned exception. \n possible causes : \n file does not exist, \n files have been changed by the user, \n the folder the program is running is has not been extracted, \n or there is a string literal in the place of an integer in a data file.)\n [Error id #1] \n press any key to continue...";
+				cerr << "ERROR! please extract the file before running the program, or check if the data files are correct.\n\n (true error : STOI function returned exception. \n possible causes : \n file does not exist, \n files have been changed by the user, \n the folder the program is running is has not been extracted, \n there is a missing value or missing line in the files\n or there is a string literal in the place of an integer in a data file.)\n [Error id #1] \n press any key to continue...";
 				getch();
 				exit(0);
-			}
+			}	
 		}
 		
 		long long int long2type(string filename, int line)
@@ -571,7 +572,7 @@ void changecolor(string color)
 	}
 	else
 	{
-		system("color 0f");
+		system("color 9f");
 	}
 }
 
@@ -897,7 +898,7 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 
 			bool dead=false, deadwas=false, stopspawning=false;
 			long long int deadwasscore=0;
-			short int planehp=5;
+			short int planehp=10;
 	
 			int
 			enemygenrandom=10,
@@ -912,6 +913,8 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 			{
 				ebgdd*=-1;
 			}
+			
+			boss[bossid].alive=true, boss[bossid].hp = boss[bossid].maxhp;
 		//arguments end
 
 		locate (0, 0);
@@ -1724,7 +1727,7 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 			
 			
 		
-		//	stopspawningscore = 200, dead=false;// I AM IRONMAN!!! 
+			//stopspawningscore = 10;//, dead=false;// I AM IRONMAN!!! 
 			
 			
 			
@@ -1772,7 +1775,7 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 				
 				if (boss[bossid].alive==true)
 				{	
-					percentsubtitle(planehp, 5, startofscreen, sizeofscreen, river, -1, 0.25);
+					percentsubtitle(planehp, 10, startofscreen, sizeofscreen, river, -1, 0.25);
 
 					
 					percentsubtitle(boss[bossid].hp, boss[bossid].maxhp, startofscreen, sizeofscreen, river, 1);
@@ -1876,7 +1879,7 @@ int game(const string mode, const bool infinite, int level, const int startofscr
 			if (stopspawning==true && mode=="bossfight" && score < stopspawningscore + 150)
 			{
 				//boss[bossid].alive=true;
-				planehp=5;
+				planehp=10;
 				if (plane[0].x>startofscreen+sizeofscreen/2)
 				{
 					plane[0].x--;	
@@ -3544,7 +3547,7 @@ int main(int argc, char *argv[])
 		{
 			Sleep(70);
 			changecolor("black");	
-				if (ynprompt("ARE YOU SURE YOU WANT TO EXIT THE GAME?")== 1)
+				if (ynprompt("ARE YOU SURE YOU WANT TO EXIT THE GAME?") == 1)
 				{
 					return 0;
 				}
